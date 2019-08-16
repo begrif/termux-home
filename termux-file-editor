@@ -1,0 +1,23 @@
+#!/data/data/com.termux/files/usr/bin/sh
+PATH=$HOME/bin:$PATH
+
+out=$HOME/last.filename
+uphist=$HOME/all.upl
+bgout=$HOME/last.upload # internal to bgupload
+ofile=$HOME/last.file
+echo "$1" > $out
+
+cat $out
+echo Content stored in $ofile
+cat "$1" > $ofile
+
+case "$1" in
+  *.png|*.PNG|*.jpg|*.JPG|*.jpeg|*.JPEG|*.tiff|*.TIFF)
+: e bgupload
+	  bgupload "$1" 
+	  grep imgur.com $bgout |sed -e 's/ //g'| pbset
+	  printf '%s - ' "$1" >> $uphist
+	  grep imgur.com $bgout >> $uphist
+	  echo Output in $bgout
+	  ;;
+esac

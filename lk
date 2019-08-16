@@ -1,0 +1,24 @@
+:
+args=yes
+pre=
+post=
+while test $args = yes ; do
+  cur=$1
+  case $cur in
+    -*) case $cur in
+          -a) pre='^'
+              post='$'
+              ;;
+           *) echo "Option '$cur' not recognized."
+              exit 1
+              ;;
+        esac
+        ;;
+     *) args=no
+        pat=$cur
+        ;;
+  esac
+  shift
+done
+grep $pre$pat$post $HOME/words
+exit $?

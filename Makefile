@@ -1,0 +1,12 @@
+PROGS = bgupload cal3 lk minute mkjpg mkpng mkppm \
+	mkthnail nums pbget pbset pfactor pizza \
+	pnminfo termux-file-editor termux-url-opener
+
+DESTDIR = $(HOME)/bin
+
+SUBFILE = basic-tools.subs
+SUBTOOL = perl MKSUBS -c $(SUBFILE)
+
+install: $(SUBFILE)
+	for p in $(PROGS); do $(SUBTOOL) < $$p > $(DESTDIR)/$$p && chmod 755 $(DESTDIR)/$$p ; done
+

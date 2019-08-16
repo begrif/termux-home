@@ -1,0 +1,92 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+in="$1"
+
+ms=1000
+rot=none
+jq=85
+fn=image
+pi=yes
+
+file "$in"; echo wide x tall; echo
+
+
+read -p 'Accept defaults [y]: ' ask
+case "x$ask" in
+xn*)
+  read -p "Flip (lr|tb|xy|cw|ccw|r180) [$rot]: " ask; rotate=${ask:-$rot}
+  read -p "Max size [$ms]: " ask; maxsiz=${ask:-$ms}
+  read -p "JPEG quality [$jq]: " ask; jqual=${ask:-$jq}
+  read -p "File w/o ext [$fn]: " ask; fname=${ask:-$fn}
+  read -p "Post to imgur [$pi]: " ask; posti=${ask:-$pi}
+  ;;
+*)
+	maxsiz=$ms
+	rotate=$rot
+	jqual=$jq
+	fname="$fn"
+	posti=$pi
+  ;;
+esac
+
+thumbout=$(mkthnail -m $maxsiz "$in" 2>&1)
+case "x$thumbout" in
+  x*done) tmp_ppm=${thumbout%?done} ;;
+  x*) echo "Resize error: $thumbout"
+      exit 1 ;;
+esac
+
+case "x$rotate" in
+	xnone) : okay ;;
+	x*) pnmflip -$rotate "$tmp_ppm" > "$tmp_ppm"2
+	    mv "$tmp_ppm"2 "$tmp_ppm"
+	    ;;
+esac
+
+jpgout=$(mkjpg -q $jqual "$tmp_ppm" 2>&1)
+rm -f "$tmp_ppm"
+case "x$jpgout" in
+  x*done) tmp_jpg=${jpgout%?done} ;;
+  x*) echo "Jpeg encode error: $jpgout"
+      exit 1 ;;
+esac
+
+# https://~~CGI_BASTION_SITE~~/bgtools/imgprepare.cgi
+# 	dirname		name of destination directory relative to hardcoded root
+# 	filename	name of local file; whitespace will be squashed
+#	ext		extension of prepared image, .png or .jpg expected
+#	rotate		rotation flag: none, cw, ccw,... (pnmflip options)
+#	maxdim		scale to, if longest side is larger than this
+#	imgur 		if set, post to imgur 
+#	flickr 		if set, post to flickr 
+#	backup		if set, name of extension to use for backup
+#	mode		if set, mode for files
+# 	file		body of file
+
+
+dirname=/tmp
+filename="$fname"
+ext=.jpg
+rotate=		# prerotated above
+maxdim=5000	# preresized above
+file="@$tmp_jpg"
+
+case "x$posti" in
+	xy*) imgur=yes ;;
+	xn*) imgur= ;;
+esac
+
+curl \
+~~CGI_BASTION_AUTH~~ \
+-F dirname="$dirname" \
+-F quiet=yes \
+-F filename="$filename" \
+-F ext="$ext" \
+-F rotate="$rotate" \
+-F maxdim="$maxdim" \
+-F imgur="$imgur" \
+-F file="$file" \
+  https://~~CGI_BASTION_SITE~~/termux-dest/imgprepare.cgi | tee $HOME/last.upload
+
+mv -f "$tmp_jpg" $HOME/last.jpg
+echo Local copy saved to $HOME/last.jpg
