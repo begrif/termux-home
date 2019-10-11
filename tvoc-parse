@@ -1,0 +1,12 @@
+#!
+# ISO8601 date format
+fulldate=$(date +'%Y-%m-%dT%H:%M:%S%z')
+fulldatejson=\""$fulldate"\"
+dir=$HOME/tvoc
+mkdir -p $dir
+# remove time of day part of date
+file=$dir/${fulldate%T*}
+
+: r ~/bin/voc1
+termux-sensor -n 1 -s temperature,humidity,"SGPC3 TVOC -Wakeup Secondary" |
+jq "[$fulldatejson,"'."SHTW2 Temperature".values[0],."SHTW2 Humidity".values[0],."SGPC3 TVOC -Wakeup Secondary".values[0]]' >> $file
