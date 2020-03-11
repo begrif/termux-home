@@ -7,6 +7,7 @@ rot=none
 jq=85
 fn=image
 pi=yes
+sd=news
 
 file "$in"; echo wide x tall; echo
 
@@ -14,17 +15,21 @@ file "$in"; echo wide x tall; echo
 read -p 'Accept defaults [y]: ' ask
 case "x$ask" in
 xn*)
-  read -p "Flip (lr|tb|xy|cw|ccw|r180) [$rot]: " ask; rotate=${ask:-$rot}
   read -p "Max size [$ms]: " ask; maxsiz=${ask:-$ms}
-  read -p "JPEG quality [$jq]: " ask; jqual=${ask:-$jq}
-  read -p "File w/o ext [$fn]: " ask; fname=${ask:-$fn}
   read -p "Post to imgur [$pi]: " ask; posti=${ask:-$pi}
+  if [ "$posti" != yes ] ; then
+    read -p "File w/o ext [$fn]: " ask; fname=${ask:-$fn}
+    read -p "Save dir (news|blog|password) [$sd]:" ask; sdir=${ask:-$sd}
+  fi 
+  read -p "Flip (lr|tb|xy|cw|ccw|r180) [$rot]: " ask; rotate=${ask:-$rot}
+  read -p "JPEG quality [$jq]: " ask; jqual=${ask:-$jq}
   ;;
 *)
 	maxsiz=$ms
 	rotate=$rot
 	jqual=$jq
 	fname="$fn"
+        sdir=$sd
 	posti=$pi
   ;;
 esac
@@ -53,6 +58,7 @@ esac
 
 # https://~~CGI_BASTION_SITE~~/bgtools/imgprepare.cgi
 # 	dirname		name of destination directory relative to hardcoded root
+#	savedir		name of destination from table (overrides dirname)
 # 	filename	name of local file; whitespace will be squashed
 #	ext		extension of prepared image, .png or .jpg expected
 #	rotate		rotation flag: none, cw, ccw,... (pnmflip options)
@@ -63,8 +69,6 @@ esac
 #	mode		if set, mode for files
 # 	file		body of file
 
-
-dirname=/tmp
 filename="$fname"
 ext=.jpg
 rotate=		# prerotated above
@@ -78,7 +82,7 @@ esac
 
 curl \
 ~~CGI_BASTION_AUTH~~ \
--F dirname="$dirname" \
+-F savedir="$sdir" \
 -F quiet=yes \
 -F filename="$filename" \
 -F ext="$ext" \
